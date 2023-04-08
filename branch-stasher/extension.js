@@ -1,27 +1,55 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+const simpleGit = require('simple-git')
+	// @ts-ignore
+const git = simpleGit();
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+async function checkRepoExists() {
+	const isRepo = await new Promise((resolve, reject) => {
+		git.checkIsRepo((err, isRepo) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(isRepo);
+			}
+		});
+	});
+	return isRepo;
+}
 
-/**
- * @param {vscode.ExtensionContext} context
- */
-function activate(context) {
+async function getAllBranches() {
+	const branches = await new Promise((resolve, reject) => {
+		git.branchLocal((err, branches) => {
+			if (err) {
+				console.log(err)
+				reject(err);
+			} else {
+				resolve(branches.all);
+			}
+		});
+	});
+	return branches;
+}
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+async function activate(context) {
 	console.log('Congratulations, your extension "branch-stasher" is now active!');
+	// @ts-ignore
+	const isRepo = await checkRepoExists().catch((err) => {
+		console.log(err)
+		return null
+	})
+	const branches = await getAllBranches().catch((err) => {
+		console.log(err)
+		return null
+	})
+	console.log(branches)
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('branch-stasher.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
+	let disposable = vscode.commands.registerCommand('branch-stasher.start', function () {
+		if (isRepo) {
+			vscode.window.showInformationMessage('Successfully persisted your files for current branch');
+		} else {
+			vscode.window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Branch Stasher!');
+		}
 	});
 
 	context.subscriptions.push(disposable);
