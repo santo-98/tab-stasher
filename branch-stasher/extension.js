@@ -3,10 +3,11 @@ const vscode = require('vscode');
 function activate(context) {
 	console.log('Congratulations, your extension "branch-stasher" is now active!');
 
+	const configData = {}
 	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports
-	const currentBranch = gitExtension?.getAPI(1).repositories[0].repository.HEAD.name
-	const configData = {test: "test"}
-	console.log(currentBranch)
+	const gitRepository = gitExtension?.getAPI(1).repositories[0].repository
+	const currentBranch = gitRepository.HEAD.name
+
 	const saveTabs = () => {
 		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
 			{
@@ -17,7 +18,16 @@ function activate(context) {
 		configData[currentBranch] = tabs
 		return JSON.stringify(configData)
 	}
-	console.log(saveTabs())
+
+	gitRepository.onDidChangeOperations((e) => {
+		console.log(e)
+
+		if(e==="Checkout"){
+			console.log(`branch changed`);
+			saveTabs()
+		}
+	});
+
 	// const restoreTabs = async () => {
 	// 	vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.forEach(async(tab) => {
 	// 		await vscode.window.showTextDocument(tab.input.uri.path)
