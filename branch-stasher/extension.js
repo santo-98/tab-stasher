@@ -1,54 +1,36 @@
 const vscode = require('vscode');
-const simpleGit = require('simple-git')
-	// @ts-ignore
-const git = simpleGit();
 
-async function checkRepoExists() {
-	const isRepo = await new Promise((resolve, reject) => {
-		git.checkIsRepo((err, isRepo) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(isRepo);
-			}
-		});
-	});
-	return isRepo;
-}
-
-async function getAllBranches() {
-	const branches = await new Promise((resolve, reject) => {
-		git.branchLocal((err, branches) => {
-			if (err) {
-				console.log(err)
-				reject(err);
-			} else {
-				resolve(branches.all);
-			}
-		});
-	});
-	return branches;
-}
-
-async function activate(context) {
+function activate(context) {
 	console.log('Congratulations, your extension "branch-stasher" is now active!');
-	// @ts-ignore
-	const isRepo = await checkRepoExists().catch((err) => {
-		console.log(err)
-		return null
-	})
-	const branches = await getAllBranches().catch((err) => {
-		console.log(err)
-		return null
-	})
-	console.log(branches)
 
+	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports
+	const currentBranch = gitExtension?.getAPI(1).repositories[0].repository.HEAD.name
+	const configData = {test: "test"}
+	console.log(currentBranch)
+	const saveTabs = () => {
+		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
+			{
+				path: tab.input.uri.path,
+				viewColumn: tab.group.viewColumn
+			}
+		)))
+		configData[currentBranch] = tabs
+		return JSON.stringify(configData)
+	}
+	console.log(saveTabs())
+	// const restoreTabs = async () => {
+	// 	vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.forEach(async(tab) => {
+	// 		await vscode.window.showTextDocument(tab.input.uri.path)
+	// 		console.log(tab.input.uri.path)
+	// 		console.log(tab.group.viewColumn)
+	// 	}))
+	// 	// await vscode.window.showTextDocument(await vscode.window.tabGroups.all[0].tabs[0].input.uri.path, {preview: false, viewColumn: 2})
+	// }
 	let disposable = vscode.commands.registerCommand('branch-stasher.start', function () {
-		if (isRepo) {
-			vscode.window.showInformationMessage('Successfully persisted your files for current branch');
-		} else {
+		if (gitExtension?.getAPI(1).repositories.length < 0) {
 			vscode.window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
-
+		} else {
+			vscode.window.showInformationMessage('Successfully persisted your files for current branch');
 		}
 	});
 
