@@ -1,14 +1,14 @@
-const vscode = require('vscode');
+import {extensions, window, Uri} from 'vscode';
 
-function activate(context) {
+function activate() {
 	console.log('Started');
 
 	const branchData = {}
-	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports
+	const gitExtension = extensions.getExtension('vscode.git')?.exports
 	const gitRepository = gitExtension?.getAPI(1).repositories[0].repository
 
 	const saveTabs = (currentBranch) => {
-		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
+		const tabs = window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
 			{
 				path: tab.input.uri.path,
 				viewColumn: tab.group.viewColumn
@@ -22,9 +22,8 @@ function activate(context) {
 		if(currentBranch in branchData){
 			const tabs = branchData[currentBranch]
 			tabs.forEach(async(tab) => {
-				console.log(tab.path)
-				await vscode.window.showTextDocument(
-					vscode.Uri.file(tab.path),
+				await window.showTextDocument(
+					Uri.file(tab.path),
 					{
 						preview: false,
 						viewColumn: tab.viewColumn
@@ -35,9 +34,9 @@ function activate(context) {
 	}
 
 	const closeTabs = () => {
-		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs)
+		const tabs = window.tabGroups.all.flatMap(({ tabs }) => tabs)
 		tabs.forEach((tab) => {
-			vscode.window.tabGroups.close(tab)
+			window.tabGroups.close(tab)
 		})
 	}
 
@@ -51,15 +50,9 @@ function activate(context) {
 		}
 	});
 
-	let disposable = vscode.commands.registerCommand('branch-stasher.start', function () {
-		if (gitExtension?.getAPI(1).repositories.length < 0) {
-			vscode.window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
-		} else {
-			vscode.window.showInformationMessage('Successfully persisted your files for current branch');
-		}
-	});
-
-	context.subscriptions.push(disposable);
+	if (gitExtension?.getAPI(1).repositories.length < 0) {
+		window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
+	}
 }
 
 // This method is called when your extension is deactivated
