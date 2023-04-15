@@ -34,9 +34,17 @@ function activate(context) {
 		}
 	}
 
+	const closeTabs = () => {
+		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs)
+		tabs.forEach((tab) => {
+			vscode.window.tabGroups.close(tab)
+		})
+	}
+
 	gitRepository.onDidChangeOperations((e) => {
 		if(e === 'Checkout'){
 			saveTabs(gitRepository.HEAD.name)
+			closeTabs()
 		}
 		if(e.operation?.kind === 'Checkout'){
 			restoreTabs(e.operation?.refLabel)
