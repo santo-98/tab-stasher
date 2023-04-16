@@ -4,7 +4,6 @@ function activate() {
 	console.log('Started');
 	const branchData = {}
 	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports
-	const gitRepository = gitExtension?.getAPI(1).repositories[0]?.repository
 
 	const saveTabs = async(currentBranch) => {
 		const tabs = await vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
@@ -17,18 +16,16 @@ function activate() {
 		return JSON.stringify(branchData)
 	}
 
-	const restoreTabs = (currentBranch) => {
+	const restoreTabs = async(currentBranch) => {
 		if(currentBranch in branchData){
 			const tabs = branchData[currentBranch]
-			tabs.forEach(async(tab) => {
-				await vscode.window.showTextDocument(
+			for (const tab of tabs) {
+				await vscode.commands.executeCommand(
+					'vscode.open',
 					vscode.Uri.file(tab.path),
-					{
-						preview: false,
-						viewColumn: tab.viewColumn
-					}
-				)
-			})
+					{ preview: false, viewColumn: tab.viewColumn }
+				);
+			}
 		}
 	}
 
@@ -41,6 +38,7 @@ function activate() {
 
 	gitExtension?.getAPI(1).onDidChangeState((e) => {
 		if(e === 'initialized'){
+			const gitRepository = gitExtension?.getAPI(1).repositories[0]?.repository
 			gitRepository.onDidChangeOperations(async(e) => {
 				if(e === 'Checkout'){
 					saveTabs(gitRepository.HEAD.name)
