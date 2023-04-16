@@ -1,14 +1,13 @@
-import {extensions, window, Uri} from 'vscode';
+const vscode = require('vscode');
 
 function activate() {
 	console.log('Started');
-
 	const branchData = {}
-	const gitExtension = extensions.getExtension('vscode.git')?.exports
-	const gitRepository = gitExtension?.getAPI(1).repositories[0].repository
+	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports
+	const gitRepository = gitExtension?.getAPI(1).repositories[0]?.repository
 
-	const saveTabs = (currentBranch) => {
-		const tabs = window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
+	const saveTabs = async(currentBranch) => {
+		const tabs = await vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
 			{
 				path: tab.input.uri.path,
 				viewColumn: tab.group.viewColumn
@@ -22,8 +21,8 @@ function activate() {
 		if(currentBranch in branchData){
 			const tabs = branchData[currentBranch]
 			tabs.forEach(async(tab) => {
-				await window.showTextDocument(
-					Uri.file(tab.path),
+				await vscode.window.showTextDocument(
+					vscode.Uri.file(tab.path),
 					{
 						preview: false,
 						viewColumn: tab.viewColumn
@@ -34,24 +33,28 @@ function activate() {
 	}
 
 	const closeTabs = () => {
-		const tabs = window.tabGroups.all.flatMap(({ tabs }) => tabs)
+		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs)
 		tabs.forEach((tab) => {
-			window.tabGroups.close(tab)
+			vscode.window.tabGroups.close(tab)
 		})
 	}
 
-	gitRepository.onDidChangeOperations((e) => {
-		if(e === 'Checkout'){
-			saveTabs(gitRepository.HEAD.name)
-			closeTabs()
+	gitExtension?.getAPI(1).onDidChangeState((e) => {
+		if(e === 'initialized'){
+			gitRepository.onDidChangeOperations(async(e) => {
+				if(e === 'Checkout'){
+					saveTabs(gitRepository.HEAD.name)
+					closeTabs()
+				}
+				if(e.operation?.kind === 'Checkout'){
+					restoreTabs(e.operation?.refLabel)
+				}
+			});
 		}
-		if(e.operation?.kind === 'Checkout'){
-			restoreTabs(e.operation?.refLabel)
-		}
-	});
+	})
 
-	if (gitExtension?.getAPI(1).repositories.length < 0) {
-		window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
+	if (gitExtension?.getAPI(1).state === 'initialized' && gitExtension?.getAPI(1).repositories.length <= 0) {
+		vscode.window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
 	}
 }
 

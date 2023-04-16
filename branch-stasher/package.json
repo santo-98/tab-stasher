@@ -1,6 +1,6 @@
 {
-  "name": "branch-stasher",
-  "displayName": "Branch Stasher",
+  "name": "tab-stasher",
+  "displayName": "Tab Stasher",
   "description": "",
   "version": "0.0.1",
   "engines": {
