@@ -40,6 +40,7 @@ function activate() {
 		if(e === 'initialized'){
 			const gitRepository = gitExtension?.getAPI(1).repositories[0]?.repository
 			gitRepository.onDidChangeOperations(async(e) => {
+				console.log(e)
 				if(e === 'Checkout'){
 					saveTabs(gitRepository.HEAD.name)
 					closeTabs()
