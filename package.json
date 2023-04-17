@@ -7,7 +7,7 @@
     "url": "https://github.com/santo-98/tab-stasher.git"
   },
   "description": "This extension of vscode allows you to persist or restore all opened tabs on switching branches.",
-  "icon": "tab-stasher-logo-removebg-preview.png",
+  "icon": "images/tab-stasher-logo-removebg-preview.png",
   "version": "0.0.4",
   "engines": {
     "vscode": "^1.77.0"
