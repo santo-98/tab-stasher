@@ -13,7 +13,6 @@ function activate() {
 			}
 		)))
 		branchData[currentBranch] = tabs
-		return JSON.stringify(branchData)
 	}
 
 	const restoreTabs = async(currentBranch) => {
@@ -25,6 +24,7 @@ function activate() {
 					vscode.Uri.file(tab.path),
 					{ preview: false, viewColumn: tab.viewColumn }
 				);
+				await new Promise(resolve => setTimeout(resolve, 500));
 			}
 		}
 	}
