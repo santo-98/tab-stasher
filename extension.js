@@ -38,6 +38,7 @@ function activate() {
 
 	const trackGitChanges = () => {
 		const gitRepository = gitExtension?.repositories[0]?.repository
+		console.log("Repositories", gitExtension?.repositories)
 		gitRepository.onDidChangeOperations(async(e) => {
 				if(e === 'Checkout'){
 						saveTabs(gitRepository.HEAD.name)
