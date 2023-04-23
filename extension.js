@@ -3,7 +3,7 @@ const vscode = require('vscode');
 function activate() {
 	console.log('Started');
 	const branchData = {}
-	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports
+	const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports?.getAPI(1)
 
 	const saveTabs = async(currentBranch) => {
 		const tabs = await vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs.map(tab => (
@@ -31,28 +31,35 @@ function activate() {
 
 	const closeTabs = () => {
 		const tabs = vscode.window.tabGroups.all.flatMap(({ tabs }) => tabs)
-		tabs.forEach((tab) => {
-			vscode.window.tabGroups.close(tab)
+		tabs.forEach(async(tab) => {
+			await vscode.window.tabGroups.close(tab)
 		})
 	}
 
-	gitExtension?.getAPI(1).onDidChangeState((e) => {
-		if(e === 'initialized'){
-			const gitRepository = gitExtension?.getAPI(1).repositories[0]?.repository
-			gitRepository.onDidChangeOperations(async(e) => {
-				console.log(e)
+	const trackGitChanges = () => {
+		const gitRepository = gitExtension?.repositories[0]?.repository
+		gitRepository.onDidChangeOperations(async(e) => {
 				if(e === 'Checkout'){
-					saveTabs(gitRepository.HEAD.name)
-					closeTabs()
+						saveTabs(gitRepository.HEAD.name)
+						closeTabs()
 				}
 				if(e.operation?.kind === 'Checkout'){
-					restoreTabs(e.operation?.refLabel)
+						restoreTabs(e.operation?.refLabel)
 				}
-			});
-		}
-	})
+		});
+	}
 
-	if (gitExtension?.getAPI(1).state === 'initialized' && gitExtension?.getAPI(1).repositories.length <= 0) {
+	if(gitExtension?.state === 'initialized'){
+		trackGitChanges()
+	} else {
+		gitExtension?.onDidChangeState((e) => {
+				if(e === 'initialized'){
+					trackGitChanges()
+				}
+		})
+	}
+
+	if (gitExtension?.state === 'initialized' && gitExtension?.repositories.length <= 0) {
 		vscode.window.showErrorMessage('Unable to find Repo. Please add Repo to your current or parent directory');
 	}
 }
