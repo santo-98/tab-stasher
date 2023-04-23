@@ -40,13 +40,13 @@ function activate() {
 		const gitRepository = gitExtension?.repositories[0]?.repository
 		console.log("Repositories", gitExtension?.repositories)
 		gitRepository.onDidChangeOperations(async(e) => {
-				if(e === 'Checkout'){
-						saveTabs(gitRepository.HEAD.name)
-						closeTabs()
-				}
-				if(e.operation?.kind === 'Checkout'){
-						restoreTabs(e.operation?.refLabel)
-				}
+			if(e === 'Checkout'){
+				saveTabs(gitRepository.HEAD.name)
+				closeTabs()
+			}
+			if(e.operation?.kind === 'Checkout'){
+				restoreTabs(e.operation?.refLabel)
+			}
 		});
 	}
 
@@ -54,9 +54,9 @@ function activate() {
 		trackGitChanges()
 	} else {
 		gitExtension?.onDidChangeState((e) => {
-				if(e === 'initialized'){
-					trackGitChanges()
-				}
+			if(e === 'initialized'){
+				trackGitChanges()
+			}
 		})
 	}
 
